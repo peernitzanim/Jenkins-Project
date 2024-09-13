@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                echo "${name}"
+            }
+        }
+        stage('Cloning Git') {
+            steps {
+                git([url: 'https://github.com/peernitzanim/AWS-Resource.git', branch: 'main', credentialsId: 'eaa88a41-7c5b-4882-9281-060dfe2def87'])
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                // Ensure that boto3 is installed
+                powershell '''
+                    C:/Users/peer/AppData/Local/Programs/Python/Python312/python.exe -m pip install boto3
+                '''
+            }
+        }
+
+        stage('Run Python Function') {
+            steps {
+                // Ensure the workspace is being used
+                dir('C:/ProgramData/Jenkins/.jenkins/workspace/EC2-Create') {
+                    // Call specific function from ec2/__init__.py
+                     powershell """
+                C:/Users/peer/AppData/Local/Programs/Python/Python312/python.exe -c \"
+import sys;
+sys.path.append('C:/ProgramData/Jenkins/.jenkins/workspace/EC2-Create');
+from ec2 import peer;
+peer('${name}');
+                \"
+            """
+                }
+            }
+        }
+    }
+}
